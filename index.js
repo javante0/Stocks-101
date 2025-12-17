@@ -15,6 +15,10 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = supabaseClient.createClient(supabaseUrl, supabaseKey);
 
+app.get('/', (req, res) => {
+    res.sendFile('public/home.html', { root: __dirname })
+})
+
 app.listen(port, () =>{
     console.log('App is available on port', port);
 });
