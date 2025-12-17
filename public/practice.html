@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stocks 101 - Practice Tool</title>
+    <link rel="stylesheet" href="practice.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+
+    <header class="main-header">
+        <h1>Investing in Stocks 101</h1>
+    </header>
+
+    <nav class="navbar">
+        <a href="home.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="practice.html" class="active">Practice Tool</a>
+        <a href="#">Investing Schedule</a>
+    </nav>
+
+    <div class="container">
+        
+        <section class="left-panel green-box">
+            <h2>How To Use The Practice Tool</h2>
+            <p>Enter the stock symbol you want to test.</p>
+            <p>-----------------------------------</p>
+            <p>Enter the amount of money you want to invest.</p>
+            <p>-----------------------------------</p>
+            <p>Enter the number of years you plan to hold it.</p>
+            <p>-----------------------------------</p>
+            <p>Click calculate to see your potential returns.</p>
+        </section>
+
+        <section class="right-panel">
+            
+            <div class="graph-box">
+                <canvas id="myChart"></canvas> <div id="graph-placeholder-text">Graph</div>
+            </div>
+
+            <div class="input-row">
+                <input type="text" id="stockName" placeholder="Symbol">
+                <input type="number" id="money" placeholder="Amount ($)">
+                <input type="number" id="rate" placeholder="Rate (%)"> 
+                <input type="number" id="years" placeholder="Years">
+                <button onclick="calculateGrowth()">Calculate</button>
+            </div>
+
+        </section>
+    </div>
+
+</body>
+</html>
