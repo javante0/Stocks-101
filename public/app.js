@@ -1,4 +1,3 @@
-
 const API_KEY = 'd51gp7hr01qhn003u9o0d51gp7hr01qhn003u9og'; 
 const BASE_URL = 'https://finnhub.io/api/v1';
 
@@ -7,6 +6,7 @@ const STOCK_SYMBOLS = ['AAPL', 'MSFT', 'TSLA', 'AMZN', 'GOOGL'];
 
 let homeChartInstance = null; 
 let currentActiveSymbol = ''; 
+let currentTimeRange = '1D';
 
 document.addEventListener('DOMContentLoaded', () => {
     if (document.querySelector('.mySwiper')) {
@@ -41,42 +41,212 @@ async function initHomePage() {
             transitionEnd: function () {
                 const realIndex = this.realIndex; 
                 const symbol = STOCK_SYMBOLS[realIndex];
-                loadStockGraph(symbol);
+                loadStockGraph(symbol, currentTimeRange);
             }
         }
     });
 
-    loadStockGraph(STOCK_SYMBOLS[0]);
+    initTimeRangeButtons();
+    loadStockGraph(STOCK_SYMBOLS[0], currentTimeRange);
 }
 
-async function loadStockGraph(symbol) {
+function initTimeRangeButtons() {
+    const timeRanges = document.querySelector('.time-ranges');
+    if (!timeRanges) return;
+
+    const spans = timeRanges.querySelectorAll('span');
+    spans.forEach(span => {
+        span.style.cursor = 'pointer';
+        span.style.padding = '5px 8px';
+        span.style.transition = 'all 0.2s';
+        
+        // Highlight the default selection
+        if (span.textContent === currentTimeRange) {
+            span.style.fontWeight = 'bold';
+            span.style.color = '#228B22';
+        }
+
+        span.addEventListener('click', () => {
+            const range = span.textContent;
+            currentTimeRange = range;
+
+            // Update styling for all buttons
+            spans.forEach(s => {
+                s.style.fontWeight = 'normal';
+                s.style.color = '';
+            });
+            span.style.fontWeight = 'bold';
+            span.style.color = '#228B22';
+
+            // Reload graph with new time range
+            loadStockGraph(currentActiveSymbol, range);
+        });
+
+        span.addEventListener('mouseenter', () => {
+            if (span.textContent !== currentTimeRange) {
+                span.style.backgroundColor = '#f0f0f0';
+            }
+        });
+
+        span.addEventListener('mouseleave', () => {
+            span.style.backgroundColor = '';
+        });
+    });
+}
+
+async function loadStockGraph(symbol, timeRange = '1D') {
     currentActiveSymbol = symbol;
-    
     const container = document.getElementById('graph-area');
 
     try {
-        const response = await fetch(`${BASE_URL}/quote?symbol=${symbol}&token=${API_KEY}`);
+        const { from, to, resolution } = getTimeRangeParams(timeRange);
         
-        if (!response.ok) throw new Error("API Limit");
-        const data = await response.json();
-        if (!data.c) throw new Error("No data");
+        // For intraday data (1D), use quote endpoint
+        if (timeRange === '1D') {
+            const response = await fetch(`${BASE_URL}/quote?symbol=${symbol}&token=${API_KEY}`);
+            if (!response.ok) throw new Error("API Limit");
+            const data = await response.json();
+            if (!data.c) throw new Error("No data");
 
-        if (currentActiveSymbol !== symbol) return;
+            if (currentActiveSymbol !== symbol) return;
 
-        const points = [data.pc, data.l, data.h, data.c];
-        const labels = ['Previous Close', 'Day Low', 'Day High', 'Current Price'];
+            const points = [data.pc, data.l, data.h, data.c];
+            const labels = ['Previous Close', 'Day Low', 'Day High', 'Current Price'];
+            drawHomeChart(container, labels, points, `${symbol} - ${timeRange}`);
+        } else {
+            // For historical data, use candles endpoint
+            const response = await fetch(
+                `${BASE_URL}/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${API_KEY}`
+            );
+            
+            if (!response.ok) throw new Error("API Limit");
+            const data = await response.json();
+            
+            if (data.s === 'no_data' || !data.c || data.c.length === 0) {
+                throw new Error("No data available");
+            }
 
-        drawHomeChart(container, labels, points, `${symbol} Daily Trajectory`);
+            if (currentActiveSymbol !== symbol) return;
+
+            // Format the data for the chart
+            const labels = data.t.map(timestamp => formatDate(timestamp, timeRange));
+            const prices = data.c; // closing prices
+
+            drawHomeChart(container, labels, prices, `${symbol} - ${timeRange}`);
+        }
 
     } catch (err) {
         console.warn("Graph error", err);
-        // Fallback
+        // Fallback with mock data
         if (currentActiveSymbol === symbol) {
-             const mockPrices = [150, 152, 149, 155];
-             drawHomeChart(container, ['Open', 'Low', 'High', 'Current'], mockPrices, symbol + " (Preview)");
+            const mockData = generateMockData(timeRange);
+            drawHomeChart(container, mockData.labels, mockData.prices, `${symbol} - ${timeRange} (Preview)`);
         }
     }
 }
+
+function getTimeRangeParams(range) {
+    const now = Math.floor(Date.now() / 1000);
+    let from, resolution;
+
+    switch(range) {
+        case '1D':
+            from = now - 86400;
+            resolution = '5'; // 5 minute intervals
+            break;
+        case '5D':
+            from = now - (86400 * 5);
+            resolution = '30'; // 30 minute intervals
+            break;
+        case '1M':
+            from = now - (86400 * 30);
+            resolution = 'D'; // Daily
+            break;
+        case '6M':
+            from = now - (86400 * 180);
+            resolution = 'D';
+            break;
+        case 'YTD':
+            const yearStart = new Date(new Date().getFullYear(), 0, 1);
+            from = Math.floor(yearStart.getTime() / 1000);
+            resolution = 'D';
+            break;
+        case '1Y':
+            from = now - (86400 * 365);
+            resolution = 'D';
+            break;
+        case '5Y':
+            from = now - (86400 * 365 * 5);
+            resolution = 'W'; // Weekly
+            break;
+        default:
+            from = now - 86400;
+            resolution = '5';
+    }
+    return { from, to: now, resolution };
+}
+
+function formatDate(timestamp, range) {
+    const date = new Date(timestamp * 1000);
+    
+    if (range === '1D' || range === '5D') {
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    } else if (range === '1M' || range === '6M') {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } else {
+        return date.toLocaleDateString('en-US', { year: '2-digit', month: 'short' });
+    }
+}
+
+function generateMockData(range) {
+    const dataPoints = {
+        '1D': 10,
+        '5D': 15,
+        '1M': 20,
+        '6M': 25,
+        'YTD': 30,
+        '1Y': 30,
+        '5Y': 35
+    };
+
+    const count = dataPoints[range] || 10;
+    const labels = [];
+    const prices = [];
+    let price = 150;
+
+    // Generate mock dates based on time range
+    const now = new Date();
+    for (let i = 0; i < count; i++) {
+        const date = new Date(now);
+        
+        // Calculate time intervals based on range
+        if (range === '1D') {
+            date.setHours(date.getHours() - (count - i) * 2); // 2-hour intervals
+            labels.push(date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+        } else if (range === '5D') {
+            date.setHours(date.getHours() - (count - i) * 8); // 8-hour intervals
+            labels.push(date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }));
+        } else if (range === '1M') {
+            date.setDate(date.getDate() - (count - i) * 1.5); // ~1.5 day intervals
+            labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        } else if (range === '6M') {
+            date.setDate(date.getDate() - (count - i) * 7); // ~7 day intervals
+            labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        } else if (range === 'YTD' || range === '1Y') {
+            date.setDate(date.getDate() - (count - i) * 12); // ~12 day intervals
+            labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        } else if (range === '5Y') {
+            date.setMonth(date.getMonth() - (count - i) * 1.7); // ~2 month intervals
+            labels.push(date.toLocaleDateString('en-US', { year: '2-digit', month: 'short' }));
+        }
+        
+        price += (Math.random() - 0.5) * 10;
+        prices.push(Math.max(100, price));
+    }
+
+    return { labels, prices };
+}
+
 
 function drawHomeChart(container, labels, dataPoints, labelText) {
 
