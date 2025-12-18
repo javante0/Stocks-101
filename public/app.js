@@ -323,6 +323,8 @@ async function calculateGrowth() {
         const ctx = document.getElementById('myChart');
         if (window.practiceChart) window.practiceChart.destroy();
 
+        document.getElementById('graph-placeholder-text').style.display = 'none';
+
         window.practiceChart = new Chart(ctx, {
             type: 'bar',
             data: {
