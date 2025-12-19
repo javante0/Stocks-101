@@ -1,15 +1,21 @@
+
 const STOCK_SYMBOLS = ['AAPL', 'MSFT', 'TSLA', 'AMZN', 'GOOGL'];
 
 let homeChartInstance = null; 
 let currentActiveSymbol = ''; 
+let currentTimeRange = '1D';
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Home Page
     if (document.querySelector('.mySwiper')) {
         initHomePage();
-    } else if (document.getElementById('myChart')) {
+    } 
+    // 2. Practice Page
+    else if (document.getElementById('myChart')) {
         initPracticePage();
     }
+    // 3. Watchlist (Runs on both if container exists)
     if (document.getElementById('watchlist-container')) {
         loadWatchlist();
     }
@@ -35,37 +41,73 @@ async function initHomePage() {
             transitionEnd: function () {
                 const realIndex = this.realIndex; 
                 const symbol = STOCK_SYMBOLS[realIndex];
-                loadStockGraph(symbol);
+                loadStockGraph(symbol, currentTimeRange);
             }
         }
     });
 
-    loadStockGraph(STOCK_SYMBOLS[0]);
+    initTimeRangeButtons();
+    loadStockGraph(STOCK_SYMBOLS[0], currentTimeRange);
 }
 
-async function loadStockGraph(symbol) {
+function initTimeRangeButtons() {
+    const timeRanges = document.querySelector('.time-ranges');
+    if (!timeRanges) return;
+
+    const spans = timeRanges.querySelectorAll('span');
+    spans.forEach(span => {
+        span.style.cursor = 'pointer';
+        span.style.padding = '5px 8px';
+        span.style.transition = 'all 0.2s';
+        
+        if (span.textContent === currentTimeRange) {
+            span.style.fontWeight = 'bold';
+            span.style.color = '#228B22';
+        }
+
+        span.addEventListener('click', () => {
+            const range = span.textContent;
+            currentTimeRange = range;
+
+            spans.forEach(s => {
+                s.style.fontWeight = 'normal';
+                s.style.color = '';
+            });
+            span.style.fontWeight = 'bold';
+            span.style.color = '#228B22';
+
+            loadStockGraph(currentActiveSymbol, range);
+        });
+    });
+}
+
+async function loadStockGraph(symbol, timeRange = '1D') {
     currentActiveSymbol = symbol;
     const container = document.getElementById('graph-area');
 
     try {
-        const response = await fetch(`/api/get-stock-data?symbol=${symbol}`);
-        
-        if (!response.ok) throw new Error("API Error");
-        const data = await response.json();
-        
-        if (!data.c) throw new Error("No data");
-        if (currentActiveSymbol !== symbol) return;
+        if (timeRange === '1D') {
+            const response = await fetch(`/api/get-stock-data?symbol=${symbol}`);
+            
+            if (!response.ok) throw new Error("API Error");
+            const data = await response.json();
+            
+            if (!data.c) throw new Error("No data");
+            if (currentActiveSymbol !== symbol) return;
 
-        const points = [data.pc, data.l, data.h, data.c];
-        const labels = ['Previous Close', 'Day Low', 'Day High', 'Current Price'];
+            const points = [data.pc, data.l, data.h, data.c];
+            const labels = ['Previous Close', 'Day Low', 'Day High', 'Current Price'];
+            drawHomeChart(container, labels, points, `${symbol} - ${timeRange}`);
+        } else {
 
-        drawHomeChart(container, labels, points, `${symbol} Daily Trajectory`);
+            throw new Error("History API not connected yet");
+        }
 
     } catch (err) {
-        console.warn("Graph error", err);
+
         if (currentActiveSymbol === symbol) {
-             const mockPrices = [150, 152, 149, 155];
-             drawHomeChart(container, ['Open', 'Low', 'High', 'Current'], mockPrices, symbol + " (Preview)");
+            const mockData = generateMockData(timeRange);
+            drawHomeChart(container, mockData.labels, mockData.prices, `${symbol} - ${timeRange} (Preview)`);
         }
     }
 }
@@ -102,6 +144,27 @@ function drawHomeChart(container, labels, dataPoints, labelText) {
 }
 
 
+function generateMockData(range) {
+    const countMap = { '1D': 10, '5D': 15, '1M': 20, '6M': 25, 'YTD': 30, '1Y': 30, '5Y': 35 };
+    const count = countMap[range] || 10;
+    const labels = [];
+    const prices = [];
+    let price = 150;
+    const now = new Date();
+
+    for (let i = 0; i < count; i++) {
+        const date = new Date(now);
+        if (range === '1D') date.setHours(date.getHours() - (count - i));
+        else date.setDate(date.getDate() - (count - i));
+        
+        labels.push(range === '1D' ? date.toLocaleTimeString() : date.toLocaleDateString());
+        price += (Math.random() - 0.5) * 10;
+        prices.push(Math.max(100, price));
+    }
+    return { labels, prices };
+}
+
+
 function initPracticePage() { }
 
 async function calculateGrowth() {
@@ -134,6 +197,9 @@ async function calculateGrowth() {
 
     const ctx = document.getElementById('myChart');
     if (window.practiceChart) window.practiceChart.destroy();
+
+    const placeholder = document.getElementById('graph-placeholder-text');
+    if (placeholder) placeholder.style.display = 'none';
 
     window.practiceChart = new Chart(ctx, {
         type: 'bar',

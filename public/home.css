@@ -19,9 +19,10 @@ body {
 
 
 .navbar {
-    background-color: #228B22; 
+    background-color: #1a4221; 
     display: flex;
     padding: 0;
+    justify-content: center;
 }
 
 .navbar a {
@@ -32,7 +33,7 @@ body {
 }
 
 .navbar a.active {
-    background-color: #3CB371; 
+    background-color: #2b5c35; 
 }
 
 
