@@ -235,6 +235,7 @@ async function loadWatchlist() {
 
         data.forEach(item => {
             const div = document.createElement('div');
+            // Flexbox setup to align items horizontally
             div.style.cssText = "background: rgba(0,0,0,0.2); margin-bottom: 8px; padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;";
             
             div.innerHTML = `
@@ -242,7 +243,22 @@ async function loadWatchlist() {
                     <strong>${item.symbol}</strong> 
                     <span style="font-size:0.8rem; color:#228B22; margin-left: 10px;">Load ↗</span>
                 </div>
-                <button onclick="deleteStock(${item.id})" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                <button onclick="deleteStock(${item.id})" style="
+                    background: #ff4444; 
+                    color: white; 
+                    border: none; 
+                    width: 26px; 
+                    height: 26px; 
+                    border-radius: 50%; 
+                    cursor: pointer; 
+                    margin-left: 10px; 
+                    display: flex; 
+                    align-items: center; 
+                    justify-content: center; 
+                    font-size: 14px;
+                    line-height: 1;
+                    padding: 0;
+                ">
                     ✕
                 </button>
             `;
