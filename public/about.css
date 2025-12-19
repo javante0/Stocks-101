@@ -20,6 +20,7 @@ body {
     background-color: #1a4221; 
     display: flex;
     padding: 0;
+    justify-content: center;
 }
 
 .navbar a {
