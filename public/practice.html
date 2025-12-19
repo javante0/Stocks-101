@@ -24,14 +24,17 @@
     <div class="container">
         
         <section class="left-panel green-box">
-            <h2>How To Use The Practice Tool</h2>
-            <p>Enter the stock symbol you want to test.</p>
-            <p>-----------------------------------</p>
-            <p>Enter the amount of money you want to invest.</p>
-            <p>-----------------------------------</p>
-            <p>Enter the number of years you plan to hold it.</p>
-            <p>-----------------------------------</p>
-            <p>Click calculate to see your potential returns.</p>
+            <h2>My Watchlist</h2>
+            <p>Save stocks here for quick access.</p>
+            
+            <div style="display: flex; gap: 5px; margin-bottom: 20px;">
+                <input type="text" id="watchInput" placeholder="Symbol" style="width: 70%; padding: 8px; border-radius: 4px; border:none;">
+                <button onclick="addToWatchlist()" style="width: 30%; padding: 8px; font-weight: bold; cursor: pointer; border-radius: 4px; border:none;">Add</button>
+            </div>
+
+            <div id="watchlist-container" style="overflow-y: auto; max-height: 300px;">
+                <p>Loading list...</p>
+            </div>
         </section>
 
         <section class="right-panel">
