@@ -1,4 +1,3 @@
-
 const STOCK_SYMBOLS = ['AAPL', 'MSFT', 'TSLA', 'AMZN', 'GOOGL'];
 
 let homeChartInstance = null; 
@@ -236,9 +235,18 @@ async function loadWatchlist() {
 
         data.forEach(item => {
             const div = document.createElement('div');
-            div.style.cssText = "background: rgba(0,0,0,0.2); margin-bottom: 8px; padding: 10px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;";
-            div.innerHTML = `<strong>${item.symbol}</strong> <span style="font-size:0.8rem; color:#228B22;">Load ↗</span>`;
-            div.onclick = () => { document.getElementById('stockName').value = item.symbol; };
+            div.style.cssText = "background: rgba(0,0,0,0.2); margin-bottom: 8px; padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;";
+            
+            div.innerHTML = `
+                <div style="flex-grow: 1; cursor: pointer;" onclick="document.getElementById('stockName').value = '${item.symbol}'">
+                    <strong>${item.symbol}</strong> 
+                    <span style="font-size:0.8rem; color:#228B22; margin-left: 10px;">Load ↗</span>
+                </div>
+                <button onclick="deleteStock(${item.id})" style="background: #ff4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                    ✕
+                </button>
+            `;
+            
             container.appendChild(div);
         });
     } catch (err) {
@@ -266,5 +274,24 @@ async function addToWatchlist() {
         }
     } catch (err) {
         console.error(err);
+    }
+}
+
+async function deleteStock(id) {
+    if (!confirm("Remove this stock from watchlist?")) return;
+
+    try {
+        const response = await fetch(`/api/delete-watchlist/${id}`, {
+            method: 'DELETE',
+        });
+
+        if (response.ok) {
+            loadWatchlist(); 
+        } else {
+            console.error('Failed to delete stock');
+            alert("Error deleting stock");
+        }
+    } catch (error) {
+        console.error('Error:', error);
     }
 }

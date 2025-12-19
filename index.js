@@ -52,6 +52,24 @@ app.post('/api/add-watchlist', async (req, res) => {
     }
 });
 
+app.delete('/api/delete-watchlist/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { error } = await supabase
+            .from('watchlist')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        res.status(200).json({ message: 'Stock deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting stock:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = app;
 
 if (require.main === module) {
