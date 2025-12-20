@@ -57,9 +57,10 @@ GET	    /api/get-stock-data	         Returns stock price data (Mock data or real
 
 **Known Bugs**
 
-Since we are using free tier accounts for Finnhub which equates to a rate limit of approximately 60 calls every minute, you may see empty graphs or an API error alert when clicking too fast
+Since we are using free tier accounts for Finnhub which equates to a rate limit of approximately 60 calls every minute, you may see empty graphs or an API error alert when clicking too fast. 
 
 
 **Future Development****
 1) Implement User Authentication so users can login with their own account and have access to their own stocks
 2) News feed section that reports the latest stock related news
+3) Allow stock data to update dynamically without having the user refresh the page

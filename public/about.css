@@ -73,19 +73,30 @@ body {
 }
 
 .bottom-box {
-    flex: 1; 
+    flex: 1;
 }
 
 .circles-container {
     display: flex;
     justify-content: center; 
-    gap: 30px; 
+    align-items: center;
+    gap: 50px; 
     margin-top: 20px;
+    width: 100%;
 }
 
 .circle {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
     background-color: #8fbc8f; 
-    border-radius: 50%; 
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #1a1a1a;
+    font-weight: bold;
+    font-size: 14px;
+    padding: 10px;
+    box-sizing: border-box;
 }
